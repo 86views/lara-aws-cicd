@@ -1,134 +1,351 @@
-# Laravel 12 ✧ FullStack CRUD with Livewire 3.6 + Flux UI 2.0 + Tailwind 4.0 + Volt 1.6 ✧
+# Laravel AWS CI/CD with Terraform 🚀
 
-A modern **CRUD** (Create, Read, Update, Delete) application built using **Laravel 12**, **Livewire 3.6**, **Flux UI 2.0**, **Tailwind CSS 4.0**, and **Volt 1.6**. This project includes enhanced **grid view** functionality with **sorting** and **searching** features.
+Production-ready **Laravel 12 CI/CD deployment** using:
 
-## 🔥 Features  
-✅ **CRUD Operations** (Create, Read, Update, Delete)  
-✅ **Livewire-powered** real-time interactions  
-✅ **Sorting & Searching** on grid view  
-✅ **Modern UI with Livewire, Flux UI & Volt**  
-✅ **Tailwind CSS 4.0 for styling**  
-✅ **PHP 8.4+ compatibility**  
-
----
-
-## 📂 Tech Stack  
-
-| Technology   | Version |
-|-------------|---------|
-| **Laravel**  | 12.0.x  |
-| **Livewire** | 3.6.x   |
-| **Flux UI**  | 2.0.x   |
-| **Tailwind** | 4.0.x   |
-| **Volt**     | 1.6.x   |
-| **PHP**      | ^8.4    |
+* Docker (PHP 8.3 + Nginx)
+* GitHub Actions (OIDC authentication)
+* Terraform (modular infrastructure)
+* AWS EC2 (SSM only — no SSH)
+* AWS RDS (MySQL/Postgres)
+* AWS ECR (Docker registry)
+* AWS S3 (storage)
+* AWS VPC (public + private subnets)
 
 ---
 
-## 🚀 Installation Guide  
+# 📁 Project Structure
 
-### 1️⃣ Clone the Repository  
-```sh
-git clone https://github.com/ux4web/laravel-stack-crud-kit.git
-cd app
+```
+laravel-aws-cicd/
+├── .github/
+│   └── workflows/
+│       └── deploy.yml
+│
+├── terraform/
+│   ├── main.tf
+│   ├── variables.tf
+│   ├── outputs.tf
+│   ├── terraform.tfvars.example
+│   │
+│   └── modules/
+│       ├── vpc/
+│       ├── ec2/
+│       ├── rds/
+│       ├── ecr/
+│       ├── s3/
+│       └── security_groups/
+│
+├── src/                 # Laravel 12 app
+│
+├── docker/
+│   ├── php/
+│   └── nginx/
+│
+├── docker-compose.yml
+├── docker-compose.prod.yml
+│
+├── scripts/
+│   ├── deploy.sh
+│   └── setup-ec2.sh
+│
+├── .dockerignore
+├── .gitignore
+└── README.md
 ```
 
-### 2️⃣ Install Dependencies  
-```sh
-composer install
-npm install
+---
+
+# 🏗️ Architecture
+
+```
+GitHub Actions
+      │
+      ▼
+OIDC Authentication
+      │
+      ▼
+Terraform Apply
+      │
+      ├── VPC
+      ├── EC2 (SSM only)
+      ├── RDS
+      ├── ECR
+      ├── S3
+      └── Security Groups
+      │
+      ▼
+Docker Image → ECR
+      │
+      ▼
+EC2 pulls image → deploy.sh
+      │
+      ▼
+Laravel running (Docker + Nginx)
 ```
 
-### 3️⃣ Set Up Environment  
-```sh
-cp .env.example .env
-php artisan key:generate
+---
+
+# ⚙️ Prerequisites
+
+Install locally:
+
+* Terraform ≥ 1.6
+* Docker
+* AWS CLI
+* Git
+* GitHub repository
+
+---
+
+# 🔐 GitHub OIDC Setup (No AWS Keys)
+
+Create IAM role with:
+
+* `sts:AssumeRoleWithWebIdentity`
+* GitHub OIDC provider
+* Terraform + ECR permissions
+
+Add to GitHub repo:
+
+```
+Settings → Secrets → Actions
 ```
 
-### 4️⃣ Configure Database  
-Edit the `.env` file and update the database settings:  
-```ini
-DB_CONNECTION=mysql
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_DATABASE=your_database_name
-DB_USERNAME=your_db_user
-DB_PASSWORD=your_db_password
+Add:
+
 ```
-Then, run migrations and seeders  
-```sh
-php artisan migrate
-php artisan db:seed
+AWS_ROLE_ARN
+AWS_REGION
 ```
 
-### 5️⃣ Serve the Application  
-```sh
-php artisan serve
-OR
-composer run dev
+---
+
+# 🚀 Step 1 — Clone Repo
+
 ```
-Visit `http://127.0.0.1:8000` in your browser.
+git clone https://github.com/YOUR_USERNAME/laravel-aws-cicd.git
+cd laravel-aws-cicd
+```
 
 ---
 
-## ⚡ CRUD Functionality  
+# 🚀 Step 2 — Configure Terraform
 
-| Action  | Description |
-|---------|------------|
-| **Create** | Add new records using a Livewire-powered form. |
-| **Read**   | View records in a responsive table with sorting & searching. |
-| **Update** | Modify existing records with real-time UI feedback. |
-| **Delete** | Soft delete or permanently remove records. |
+```
+cd terraform
+cp terraform.tfvars.example terraform.tfvars
+```
 
----
+Edit:
 
-## 📌 Sorting & Searching  
-
-🔹 **Sorting**: Click on column headers to sort data in ascending or descending order.  
-🔹 **Searching**: Use the search bar to filter results dynamically.  
-🔹 **Dynamic Sort / Search Filter Badges**: Dynamic additions of tags for search and sort and intelligence recognition of Clear All badge in sort and search filters is added when more than one badge is visible on the screen.
-
-Powered by **Livewire 3.6**, ensuring a smooth, real-time user experience!
+```
+project_name = "laravel-cicd"
+aws_region   = "eu-central-1"
+instance_type = "t3.micro"
+db_name = "laravel"
+db_user = "admin"
+```
 
 ---
 
-## 🎨 UI & Styling  
+# 🚀 Step 3 — Deploy Infrastructure
 
-This project leverages:  
-- **Flux UI 2.0** for beautiful, ready-to-use UI components.  
-- **Volt 1.6** for a clean and modern admin panel.  
-- **Tailwind CSS 4.0** for fast and flexible styling.  
+```
+terraform init
+terraform plan
+terraform apply
+```
 
----
+Terraform will create:
 
-## 🛠 Commands Reference  
-
-| Command | Description |
-|---------|------------|
-| `php artisan migrate:fresh --seed` | Reset and seed the database. |
-| `php artisan make:livewire ComponentName` | Create a new Livewire component. |
-
----
-
-## 📜 License  
-
-This project is licensed under the **MIT License**.
+* VPC
+* EC2
+* RDS
+* ECR
+* S3
+* Security Groups
+* SSM Parameters
 
 ---
 
-## 🤝 Contribution  
+# 🚀 Step 4 — Build & Push Image
 
-Feel free to fork this repository and submit pull requests. Contributions are always welcome!  
+Handled automatically by GitHub Actions when you push:
 
----
-
-## 📬 Contact  
-
-👤 **Chaman Sharma | ux4web**  
-🔗 [Portfolio](https://ux4web.com)  
-
-Happy coding! 🚀 🎉  
+```
+git add .
+git commit -m "Initial deploy"
+git push origin main
+```
 
 ---
 
-Would you like me to customize or add any new feature to this in further? Feel free to add and I will try to add a provision for the same. 😊
+# 🔄 CI/CD Flow
+
+1. Push to `main`
+2. GitHub Actions builds Docker image
+3. Pushes to ECR
+4. Runs deploy script on EC2 via SSM
+5. Laravel container restarts
+6. Migration runs automatically
+
+---
+
+# 🐳 Local Development
+
+```
+docker-compose up -d
+```
+
+Access:
+
+```
+http://localhost
+```
+
+---
+
+# 🏭 Production Deployment
+
+Production uses:
+
+```
+docker-compose.prod.yml
+```
+
+Deployment script:
+
+```
+scripts/deploy.sh
+```
+
+Handles:
+
+* Pull image
+* Load SSM secrets
+* Run migrations
+* Restart containers
+
+---
+
+# 🔑 No SSH Access
+
+This project uses **AWS SSM only**
+
+To connect:
+
+```
+AWS Console → EC2 → Connect → Session Manager
+```
+
+No SSH keys required 🔐
+
+---
+
+# 📦 Terraform Modules
+
+| Module          | Purpose         |
+| --------------- | --------------- |
+| vpc             | Networking      |
+| ec2             | App server      |
+| rds             | Database        |
+| ecr             | Docker registry |
+| s3              | Storage         |
+| security_groups | Firewall        |
+
+---
+
+# 🌍 Environment Variables (SSM)
+
+Stored in AWS SSM:
+
+```
+/laravel/app_key
+/laravel/db_host
+/laravel/db_name
+/laravel/db_user
+/laravel/db_password
+```
+
+Loaded automatically during deploy.
+
+---
+
+# 🔄 Redeploy
+
+Just push:
+
+```
+git push origin main
+```
+
+CI/CD handles everything.
+
+---
+
+# 🧹 Destroy Infrastructure
+
+```
+cd terraform
+terraform destroy
+```
+
+---
+
+# 🛠️ Useful Commands
+
+Check containers:
+
+```
+docker ps
+```
+
+View logs:
+
+```
+docker logs laravel-app
+```
+
+Enter container:
+
+```
+docker exec -it laravel-app bash
+```
+
+---
+
+# 🎯 Features
+
+✅ Full CI/CD
+✅ GitHub OIDC (no secrets)
+✅ Dockerized Laravel
+✅ Terraform modular infra
+✅ RDS managed database
+✅ ECR image registry
+✅ SSM secure secrets
+✅ No SSH required
+✅ Production ready
+
+---
+
+# 📈 Future Improvements
+
+* Load Balancer
+* Auto Scaling
+* ECS Fargate migration
+* CloudFront CDN
+* Redis cache
+* Blue/Green deploy
+
+---
+
+# 👨‍💻 Author
+
+DevOps Portfolio Project
+Laravel + AWS + Terraform + CI/CD
+
+---
+
+# 📜 License
+
+MIT License
