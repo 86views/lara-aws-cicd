@@ -40,10 +40,9 @@ jobs:
         id: get-instance
         run: |
           INSTANCE_ID=$(aws ec2 describe-instances \
-            --filters "Name=tag:Name,Values=laravel-ec2" \
-            --query "Reservations[0].Instances[0].InstanceId" \
+            --filters "Name=tag:Name,Values=laravel-ec2" "Name=instance-state-name,Values=running" \
+            --query "Reservations[].Instances[].InstanceId" \
             --output text)
-
           echo "instance_id=$INSTANCE_ID" >> $GITHUB_OUTPUT
 
       - name: Trigger deployment via SSM
