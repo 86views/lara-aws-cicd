@@ -62,8 +62,10 @@
                     @endif
                 </td>
                 <td class="px-4 py-3 flex items-center space-x-2">
+                     <a href="{{ route('products.show', $product) }}"
+                       class="text-blue-600 hover:underline text-xs font-medium">View</a>
                     <a href="{{ route('products.edit', $product) }}"
-                       class="text-blue-600 hover:underline text-xs font-medium">Edit</a>
+                       class="text-blue-600 hover:underline text-xs font-medium">Edit</a>   
                     <form action="{{ route('products.destroy', $product) }}" method="POST"
                           onsubmit="return confirm('Delete this product?')">
                         @csrf @method('DELETE')
