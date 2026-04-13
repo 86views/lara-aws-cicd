@@ -52,6 +52,9 @@ laravel-aws-cicd/
 ├── .gitignore
 └── README.md
 ```
+**Built with ❤️ using Laravel 12.x**
+
+*Laravel Practical Task — Product Tag Manager*
 
 ---
 
