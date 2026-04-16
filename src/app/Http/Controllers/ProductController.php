@@ -5,6 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use App\Imports\ProductsImport;
+use App\Exports\ProductsExport;
+use App\Exports\ProductsTemplateExport;
+use Maatwebsite\Excel\Facades\Excel;
+
 
 class ProductController extends Controller
 {
@@ -112,5 +117,84 @@ class ProductController extends Controller
 
         return redirect()->route('products.index')
             ->with('success', 'Product deleted.');
+    }
+
+
+    public function exportExcel()
+    {
+        try {
+            return Excel::download(new ProductsExport(), 'products_' . date('Y-m-d_H-i-s') . '.xlsx');
+        } catch (\Exception $e) {
+            return redirect()->route('products.index')
+                ->with('error', 'Export failed: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Export products to CSV
+     */
+    public function exportCsv()
+    {
+        try {
+            return Excel::download(new ProductsExport(), 'products_' . date('Y-m-d_H-i-s') . '.csv', \Maatwebsite\Excel\Excel::CSV);
+        } catch (\Exception $e) {
+            return redirect()->route('products.index')
+                ->with('error', 'Export failed: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Download import template
+     */
+    public function downloadTemplate()
+    {
+        try {
+            return Excel::download(new ProductsTemplateExport(), 'products_import_template.xlsx');
+        } catch (\Exception $e) {
+            return redirect()->route('products.index')
+                ->with('error', 'Template download failed: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Show import form
+     */
+    public function showImportForm()
+    {
+        return view('products.import');
+    }
+
+    /**
+     * Import products from Excel/CSV
+     */
+    public function import(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:xlsx,xls,csv|max:10240', // 10MB max
+        ]);
+
+        try {
+            $import = new ProductsImport();
+            Excel::import($import, $request->file('file'));
+            
+            $importedCount = $import->getImportedCount();
+            $errors = $import->getErrors();
+            $failures = $import->getFailures();
+            
+            $message = "Successfully imported {$importedCount} products.";
+            
+            if (!empty($errors) || !empty($failures)) {
+                session()->flash('import_errors', ['errors' => $errors, 'failures' => $failures]);
+                return redirect()->route('products.index')
+                    ->with('warning', $message . ' However, some rows had issues. Click "View Details" for more info.');
+            }
+            
+            return redirect()->route('products.index')
+                ->with('success', $message);
+                
+        } catch (\Exception $e) {
+            return redirect()->route('products.index')
+                ->with('error', 'Import failed: ' . $e->getMessage());
+        }
     }
 }
