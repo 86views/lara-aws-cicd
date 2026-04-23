@@ -32,6 +32,12 @@ resource "aws_db_instance" "mysql" {
   publicly_accessible    = false
   backup_retention_period = 0
 
+  timeouts {
+    create = "90m"
+    update = "90m"
+    delete = "90m"
+  }
+
   tags = {
     Name = "laravel-mysql"
   }

@@ -1,46 +1,78 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="flex items-center justify-between mb-6">
-    <h1 class="text-2xl font-bold text-gray-800">Product Manager</h1>
-    <a href="{{ route('products.create') }}"
-       class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition">
-        + Add Product
-    </a>
+<div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+    {{-- Left: Title --}}
+    <div class="flex items-center gap-3">
+        <h1 class="text-2xl font-semibold text-gray-900 tracking-tight">Product Manager</h1>
+        <span class="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
+            {{ $products->total() ?? 0 }} items
+        </span>
+    </div>
 
-     <a href="{{ route('products.import.form') }}"
-           class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium transition inline-flex items-center">
-            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+    {{-- Right: Actions Group --}}
+    <div class="flex items-center gap-2">
+        {{-- Add Product Button --}}
+        <a href="{{ route('products.create') }}"
+           class="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
             </svg>
-            Import Products
+            <span class="hidden sm:inline">Add Product</span>
+            <span class="sm:hidden">Add</span>
         </a>
 
-         <div class="relative inline-block text-left" x-data="{ open: false }">
+        {{-- Import Button --}}
+        <a href="{{ route('products.import.form') }}"
+           class="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition-all hover:bg-gray-50 hover:text-gray-900 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+            </svg>
+            <span class="hidden sm:inline">Import</span>
+        </a>
+
+        {{-- Export Dropdown --}}
+        <div class="relative" x-data="{ open: false }">
             <button @click="open = !open" 
-                    class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium transition inline-flex items-center">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                    class="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition-all hover:bg-gray-50 hover:text-gray-900 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                 </svg>
-                Export
-                <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                <span class="hidden sm:inline">Export</span>
+                <svg class="h-4 w-4 transition-transform duration-200" :class="{ 'rotate-180': open }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                 </svg>
             </button>
             
             <div x-show="open" 
+                 x-cloak
                  @click.away="open = false"
-                 class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10">
-                <a href="{{ route('products.export.excel') }}" 
-                   class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                    📊 Export to Excel
-                </a>
-                <a href="{{ route('products.export.csv') }}" 
-                   class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                    📄 Export to CSV
-                </a>
+                 x-transition:enter="transition ease-out duration-100"
+                 x-transition:enter-start="transform opacity-0 scale-95"
+                 x-transition:enter-end="transform opacity-100 scale-100"
+                 x-transition:leave="transition ease-in duration-75"
+                 x-transition:leave-start="transform opacity-100 scale-100"
+                 x-transition:leave-end="transform opacity-0 scale-95"
+                 class="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-lg bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                <div class="py-1">
+                    <a href="{{ route('products.export.excel') }}" 
+                       class="group flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50">
+                        <svg class="h-4 w-4 text-green-600" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm0 18H6V4h7v5h5v11z"/>
+                        </svg>
+                        Excel (.xlsx)
+                    </a>
+                    <a href="{{ route('products.export.csv') }}" 
+                       class="group flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50">
+                        <svg class="h-4 w-4 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm0 18H6V4h7v5h5v11z"/>
+                        </svg>
+                        CSV (.csv)
+                    </a>
+                </div>
             </div>
         </div>
+    </div>
 </div>
 
 <div class="bg-white shadow rounded-lg overflow-hidden">

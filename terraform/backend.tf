@@ -4,9 +4,6 @@ terraform {
     key            = "lara-aws-cicd/terraform.tfstate"
     region         = "us-east-1"
     dynamodb_table = "terraform-locks"
-    encrypt        = true
-
-   
-    
+    encrypt        = true   
   }
 }

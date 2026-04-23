@@ -19,9 +19,11 @@
     <nav class="bg-white shadow-sm border-b border-gray-200">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
-                <span class="text-xl font-bold text-blue-700 tracking-tight">
-                    Product Tag Manager
-                </span>
+               <a href="{{ route('products.index') }}">
+    <span class="text-xl font-bold text-blue-700 tracking-tight">
+        Product Tag Manager
+    </span>
+</a>>
                 <div class="flex space-x-2">
                     <a href="{{ route('products.index') }}"
                     class="px-4 py-2 rounded-md text-sm font-medium transition-colors 

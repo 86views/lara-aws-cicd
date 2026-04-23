@@ -29,4 +29,4 @@ Route::post('rules/{rule}/apply', [RuleController::class, 'applyRule'])->name('r
 
   Route::get('/analytics', [AnalyticsController::class, 'index'])->name('analytics.dashboard');
    Route::get('/analytics/export', [AnalyticsController::class, 'export'])->name('analytics.export');
-   Route::get('/analytics-test', [AnalyticsController::class, 'test']);
+  
