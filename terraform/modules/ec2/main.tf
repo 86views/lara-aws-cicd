@@ -61,7 +61,7 @@ resource "aws_instance" "laravel" {
   })
 
   lifecycle {
-    prevent_destroy = true
+    # prevent_destroy = true
     ignore_changes  = [ami, user_data, user_data_base64]
   }
 

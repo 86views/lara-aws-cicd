@@ -341,6 +341,7 @@ docker exec -it laravel-app bash
 * Blue/Green deploy
 * Observability with Prometheus & Grafana
 * Checkov (Static Code Analysis for IaC)
+* Amazon Managed Grafana
 * More additional features
 
 ---
@@ -348,7 +349,7 @@ docker exec -it laravel-app bash
 # 👨‍💻 Author
 
 DevOps Portfolio Project and Work Complete For Recruiters to access
-Laravel 12 AWS + Terraform + GithubActions CI/CD 
+Laravel 12 AWS + Terraform + GithubActions CI/CD By Oluleye Oluseun O
 
 ---
 

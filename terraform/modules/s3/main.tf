@@ -1,5 +1,6 @@
 resource "aws_s3_bucket" "laravel_storage" {
   bucket = "laravel-storage-${random_string.suffix.result}"
+  force_destroy = true
 
   tags = {
     Name        = "laravel-storage"
