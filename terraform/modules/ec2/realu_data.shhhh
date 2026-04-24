@@ -1,9 +1,11 @@
 #!/bin/bash
-set -eux
+set -e
 
+# Update Ubuntu packages
 apt-get update -y
 apt-get upgrade -y
 
+# Install dependencies
 apt-get install -y \
   ca-certificates \
   curl \
@@ -12,14 +14,13 @@ apt-get install -y \
   git \
   awscli
 
-# SSM Agent
+# Install SSM Agent
 snap install amazon-ssm-agent --classic
 systemctl enable snap.amazon-ssm-agent.amazon-ssm-agent.service
 systemctl start snap.amazon-ssm-agent.amazon-ssm-agent.service
 
-# Docker
+# Add Docker's official GPG key and repo
 mkdir -p /etc/apt/keyrings
-
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg \
   | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
 
@@ -29,19 +30,26 @@ echo \
   $(lsb_release -cs) stable" \
   | tee /etc/apt/sources.list.d/docker.list > /dev/null
 
+# Install Docker + Compose plugin
 apt-get update -y
 apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
 
+# Enable Docker service
 systemctl enable --now docker
 
-# App directory
+# Add ubuntu user to docker group
+usermod -aG docker ubuntu
+
+# Create app directory ← THIS WAS MISSING
 mkdir -p /var/www/lara-aws-cicd
+chown -R ubuntu:ubuntu /var/www
 
+# Clone your repo
 cd /var/www
+git clone https://github.com/${github_repository}.git lara-aws-cicd
+chown -R ubuntu:ubuntu /var/www/lara-aws-cicd
 
-# ✅ FIXED: hardcoded repo
-git clone https://github.com/YOUR_USERNAME/YOUR_REPO.git lara-aws-cicd
-
+# Make deploy script executable
 chmod +x /var/www/lara-aws-cicd/scripts/deploy.sh
 
-echo "✅ EC2 bootstrap complete"
+echo "EC2 bootstrap complete. First deployment will happen via GitHub Actions."
