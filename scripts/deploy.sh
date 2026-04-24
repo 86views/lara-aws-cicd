@@ -1,94 +1,63 @@
 #!/bin/bash
-set -euo pipefail
+set -euxo pipefail
 
-# ─────────────────────────────────────────────
-# Usage: ./deploy.sh <FULL_ECR_IMAGE_URI>
-# Example:
-#   ./deploy.sh 123456789.dkr.ecr.us-east-1.amazonaws.com/laravel-app:abc1234
-# ─────────────────────────────────────────────
+exec > >(tee /var/log/deploy.log) 2>&1
+
 export AWS_REGION=us-east-1
 export AWS_DEFAULT_REGION=us-east-1
-
-APP_IMAGE="${1:-}"
-if [ -z "$APP_IMAGE" ]; then
-  echo "❌  ERROR: No image URI provided."
-  echo "   Usage: ./deploy.sh <ECR_IMAGE_URI>"
-  exit 1
-fi
+export PATH=$PATH:/usr/bin:/usr/local/bin
 
 APP_DIR="/var/www/lara-aws-cicd"
+APP_IMAGE="${1:-}"
 
-echo "════════════════════════════════════════"
-echo "🚀  Starting deployment"
-echo "    Image : $APP_IMAGE"
-echo "    Dir   : $APP_DIR"
-echo "════════════════════════════════════════"
-
-# ── 1. Go to app directory ───────────────────
-cd "$APP_DIR"
-
-# ── 2. Fetch secrets from SSM ────────────────
-echo "🔑  Fetching secrets from SSM Parameter Store..."
-
-DB_HOST=$(aws ssm get-parameter \
-  --region "$AWS_REGION" \
-  --name "/laravel/db/host" \
-  --query "Parameter.Value" --output text)
-
-DB_NAME=$(aws ssm get-parameter \
-  --region "$AWS_REGION" \
-  --name "/laravel/db/name" \
-  --query "Parameter.Value" --output text)
-
-DB_USER=$(aws ssm get-parameter \
-  --region "$AWS_REGION" \
-  --name "/laravel/db/username" \
-  --query "Parameter.Value" --output text)
-
-DB_PASS=$(aws ssm get-parameter \
-  --region "$AWS_REGION" \
-  --name "/laravel/db/password" \
-  --with-decryption \
-  --query "Parameter.Value" --output text)
-
-APP_KEY=$(aws ssm get-parameter \
-  --region "$AWS_REGION" \
-  --name "/laravel/app/key" \
-  --with-decryption \
-  --query "Parameter.Value" --output text)
-
-# ── Guard: ensure APP_KEY is not empty ───────
-if [ -z "$APP_KEY" ]; then
-  echo "❌  ERROR: APP_KEY is empty — check SSM parameter /laravel/app/key"
+if [ -z "$APP_IMAGE" ]; then
+  echo "❌ ERROR: No image URI provided."
   exit 1
 fi
 
-# Get the public IP of this EC2 instance
-PUBLIC_IP=$(curl -sf http://169.254.169.254/latest/meta-data/public-ipv4 || echo "localhost")
+# ── Self-healing repo clone ──────────────────
+if [ ! -d "$APP_DIR" ]; then
+  echo "📦 Repo missing — cloning..."
+  git clone https://github.com/86views/lara-aws-cicd.git "$APP_DIR"
+fi
 
-echo "✅  Secrets fetched."
+echo "🚀 Deploying: $APP_IMAGE"
 
-# ── 3. Write root .env (used by docker compose) ──
-echo "📝  Writing root .env (compose vars)..."
-cat > .env << EOF
-# Docker Compose variables — NOT loaded by Laravel directly
+cd "$APP_DIR"
+
+# ── Validate ────────────────────────────────
+if [ ! -f "docker-compose.prod.yml" ]; then
+  echo "❌ docker-compose.prod.yml missing"
+  ls -la
+  exit 1
+fi
+
+# ── Fetch secrets ───────────────────────────
+DB_HOST=$(aws ssm get-parameter --name "/laravel/db/host" --query "Parameter.Value" --output text)
+DB_NAME=$(aws ssm get-parameter --name "/laravel/db/name" --query "Parameter.Value" --output text)
+DB_USER=$(aws ssm get-parameter --name "/laravel/db/username" --query "Parameter.Value" --output text)
+DB_PASS=$(aws ssm get-parameter --name "/laravel/db/password" --with-decryption --query "Parameter.Value" --output text)
+APP_KEY=$(aws ssm get-parameter --name "/laravel/app/key" --with-decryption --query "Parameter.Value" --output text)
+
+for var in DB_HOST DB_NAME DB_USER DB_PASS APP_KEY; do
+  if [ -z "${!var}" ]; then
+    echo "❌ Missing $var"
+    exit 1
+  fi
+done
+
+# ── Write env ───────────────────────────────
+cat > .env <<EOF
 APP_IMAGE=${APP_IMAGE}
 EOF
-echo "✅  Root .env written."
 
-# ── 4. Write src/.env (loaded by Laravel inside container) ──
-echo "📝  Writing src/.env (Laravel app vars)..."
 mkdir -p src
-cat > src/.env << EOF
+
+cat > src/.env <<EOF
 APP_NAME=Laravel
 APP_ENV=production
 APP_KEY=${APP_KEY}
 APP_DEBUG=false
-APP_URL=http://${PUBLIC_IP}
-
-LOG_CHANNEL=stack
-LOG_DEPRECATIONS_CHANNEL=null
-LOG_LEVEL=error
 
 DB_CONNECTION=mysql
 DB_HOST=${DB_HOST}
@@ -96,66 +65,36 @@ DB_PORT=3306
 DB_DATABASE=${DB_NAME}
 DB_USERNAME=${DB_USER}
 DB_PASSWORD=${DB_PASS}
-
-BROADCAST_DRIVER=log
-CACHE_DRIVER=file
-FILESYSTEM_DISK=local
-QUEUE_CONNECTION=sync
-SESSION_DRIVER=file
-SESSION_LIFETIME=120
 EOF
 
-# ── Secure the .env file ──────────────────────
 chmod 600 src/.env
-echo "✅  src/.env written and secured."
 
-# ── 5. Authenticate Docker with ECR ──────────
-echo "🐳  Logging in to ECR..."
+# ── Docker login ────────────────────────────
 AWS_ACCOUNT_ID=$(echo "$APP_IMAGE" | cut -d'.' -f1)
-aws ecr get-login-password --region "$AWS_REGION" \
-  | docker login --username AWS --password-stdin \
+
+aws ecr get-login-password \
+  | sudo docker login \
+    --username AWS \
+    --password-stdin \
     "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
-echo "✅  ECR login successful."
 
-# ── 6. Pull latest image ──────────────────────
-echo "📦  Pulling image: $APP_IMAGE..."
-docker pull "$APP_IMAGE"
-echo "✅  Image pulled."
+# ── Deploy ──────────────────────────────────
+sudo docker pull "$APP_IMAGE"
 
-# ── 7. Bring containers up ────────────────────
-echo "🔄  Starting containers..."
-docker compose -f docker-compose.prod.yml up -d --force-recreate --remove-orphans
-echo "✅  Containers started."
+sudo docker compose -f docker-compose.prod.yml up -d --force-recreate --remove-orphans
 
-# ── 8. Wait for app container to be healthy ──
-echo "⏳  Waiting for app container to be ready..."
-for i in {1..10}; do
-  docker compose -f docker-compose.prod.yml exec -T app php artisan --version && break
-  echo "    Waiting... attempt ($i/10)"
-  sleep 3
-done
+sleep 10
 
-# ── 9. Run Laravel post-deploy commands ──────
-echo "⚙️   Running Laravel commands..."
+sudo docker compose exec -T app php artisan migrate --force
+sudo docker compose exec -T app php artisan config:cache
+sudo docker compose exec -T app php artisan route:cache
+sudo docker compose exec -T app php artisan view:cache
 
-docker compose -f docker-compose.prod.yml exec -T app \
-  php artisan migrate --force
+# ── Cleanup ───────────────────────────────────
+sudo docker image prune -f
 
-docker compose -f docker-compose.prod.yml exec -T app \
-  php artisan config:cache
-
-docker compose -f docker-compose.prod.yml exec -T app \
-  php artisan route:cache
-
-docker compose -f docker-compose.prod.yml exec -T app \
-  php artisan view:cache
-
-echo "✅  Laravel commands complete."
-
-# ── 10. Clean up old Docker images ───────────
-echo "🧹  Pruning unused Docker images..."
-docker image prune -f
-echo "✅  Cleanup done."
+# ── Get Public IP ─────────────────────────────
+PUBLIC_IP=$(curl -sf http://169.254.169.254/latest/meta-data/public-ipv4 || echo "localhost")
 
 echo ""
 echo "════════════════════════════════════════"

@@ -40,7 +40,7 @@ mkdir -p /var/www/lara-aws-cicd
 cd /var/www
 
 # ✅ FIXED: hardcoded repo
-git clone https://github.com/YOUR_USERNAME/YOUR_REPO.git lara-aws-cicd
+git clone https://github.com/86views/lara-aws-cicd.git lara-aws-cicd
 
 chmod +x /var/www/lara-aws-cicd/scripts/deploy.sh
 
