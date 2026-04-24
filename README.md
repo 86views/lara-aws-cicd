@@ -1,6 +1,6 @@
 # Laravel AWS CI/CD with Terraform 🚀
 
-Production-ready **Laravel 12 CI/CD deployment** using:
+Production-ready **Laravel 12 Prodcut Tags and AnalyticsCI/CD deployment** using:
 
 * Docker (PHP 8.3 + Nginx)
 * GitHub Actions (OIDC authentication)
@@ -345,7 +345,7 @@ docker exec -it laravel-app bash
 # 👨‍💻 Author
 
 DevOps Portfolio Project
-Laravel + AWS + Terraform + CI/CD
+Laravel 12 AWS + Terraform + GithubActions CI/CD 
 
 ---
 

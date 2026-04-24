@@ -60,6 +60,11 @@ resource "aws_instance" "laravel" {
     github_repository = var.github_repository
   })
 
+  lifecycle {
+    prevent_destroy = true
+    ignore_changes  = [ami, user_data]
+  }
+
   tags = {
     Name = "laravel-ec2"
   }
