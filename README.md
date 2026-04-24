@@ -339,6 +339,8 @@ docker exec -it laravel-app bash
 * CloudFront CDN
 * Redis cache
 * Blue/Green deploy
+*  Observability with Pro
+* chekov
 
 ---
 

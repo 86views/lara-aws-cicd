@@ -14,6 +14,11 @@ apt-get install -y \
   git \
   awscli
 
+# Install SSM Agent
+snap install amazon-ssm-agent --classic
+systemctl enable snap.amazon-ssm-agent.amazon-ssm-agent.service
+systemctl start snap.amazon-ssm-agent.amazon-ssm-agent.service
+
 # Add Docker's official GPG key and repo
 mkdir -p /etc/apt/keyrings
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg \
@@ -35,13 +40,13 @@ systemctl enable --now docker
 # Add ubuntu user to docker group
 usermod -aG docker ubuntu
 
-# Create app directory
+# Create app directory ← THIS WAS MISSING
 mkdir -p /var/www/laravel-aws-cicd
-chown -R ubuntu:ubuntu /var/www/laravel-aws-cicd
+chown -R ubuntu:ubuntu /var/www
 
 # Clone your repo
 cd /var/www
-git clone https://github.com/${github_repository}.git laravel-aws-cicd
+git clone https://github.com/${github_repository}.git lara-aws-cicd
 chown -R ubuntu:ubuntu /var/www/laravel-aws-cicd
 
 # Make deploy script executable
