@@ -4,11 +4,10 @@ set -euxo pipefail
 # Fix 1: direct redirect instead of tee subshell (causes SSM to hang)
 exec > /var/log/deploy.log 2>&1
 
+# Top of deploy.sh should be:
 export AWS_REGION=us-east-1
 export AWS_DEFAULT_REGION=us-east-1
-export PATH=$PATH:/usr/bin:/usr/local/bin
-
-APP_DIR="/var/www/lara-aws-cicd"
+APP_DIR="/var/www/lara-aws-cicd"   # ← must be defined BEFORE the if [ ! -d check
 APP_IMAGE="${1:-}"
 
 if [ -z "$APP_IMAGE" ]; then
