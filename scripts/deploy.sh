@@ -83,12 +83,37 @@ sudo docker pull "$APP_IMAGE"
 
 sudo docker compose -f docker-compose.prod.yml up -d --force-recreate --remove-orphans
 
-sleep 10
+# sleep 10
+
+# sudo docker compose exec -T app php artisan migrate --force
+
+# sudo docker compose exec -T app php artisan config:cache
+# sudo docker compose exec -T app php artisan route:cache
+# sudo docker compose exec -T app php artisan view:cache
+
+
+echo "⏳ Waiting for Laravel container..."
+
+for i in {1..20}; do
+  if sudo docker compose exec -T app php artisan --version > /dev/null 2>&1; then
+    echo "✅ Laravel ready"
+    break
+  fi
+
+  echo "Waiting... ($i/20)"
+  sleep 3
+done
+
+echo "⚙️ Running Laravel commands..."
+
+set +e
 
 sudo docker compose exec -T app php artisan migrate --force
 sudo docker compose exec -T app php artisan config:cache
 sudo docker compose exec -T app php artisan route:cache
 sudo docker compose exec -T app php artisan view:cache
+
+set -e
 
 # ── Cleanup ───────────────────────────────────
 sudo docker image prune -f
