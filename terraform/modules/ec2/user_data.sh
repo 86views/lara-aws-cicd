@@ -41,15 +41,15 @@ systemctl enable --now docker
 usermod -aG docker ubuntu
 
 # Create app directory ← THIS WAS MISSING
-mkdir -p /var/www/laravel-aws-cicd
+mkdir -p /var/www/lara-aws-cicd
 chown -R ubuntu:ubuntu /var/www
 
 # Clone your repo
 cd /var/www
 git clone https://github.com/${github_repository}.git lara-aws-cicd
-chown -R ubuntu:ubuntu /var/www/laravel-aws-cicd
+chown -R ubuntu:ubuntu /var/www/lara-aws-cicd
 
 # Make deploy script executable
-chmod +x /var/www/laravel-aws-cicd/scripts/deploy.sh
+chmod +x /var/www/lara-aws-cicd/scripts/deploy.sh
 
 echo "EC2 bootstrap complete. First deployment will happen via GitHub Actions."

@@ -67,7 +67,7 @@ jobs:
           COMMAND_ID=$(aws ssm send-command \
             --instance-ids ${{ steps.get-instance.outputs.instance_id }} \
             --document-name "AWS-RunShellScript" \
-            --parameters commands=["cd /var/www/laravel-aws-cicd && ./scripts/deploy.sh ${{ env.IMAGE }}"] \
+            --parameters commands=["cd /var/www/lara-aws-cicd && ./scripts/deploy.sh ${{ env.IMAGE }}"] \
             --query "Command.CommandId" \
             --output text)
 

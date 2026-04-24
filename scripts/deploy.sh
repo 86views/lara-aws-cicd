@@ -16,7 +16,7 @@ if [ -z "$APP_IMAGE" ]; then
   exit 1
 fi
 
-APP_DIR="/var/www/laravel-aws-cicd"
+APP_DIR="/var/www/lara-aws-cicd"
 
 echo "════════════════════════════════════════"
 echo "🚀  Starting deployment"

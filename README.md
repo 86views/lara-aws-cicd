@@ -339,8 +339,9 @@ docker exec -it laravel-app bash
 * CloudFront CDN
 * Redis cache
 * Blue/Green deploy
-*  Observability with Pro
-* chekov
+* Observability with Prometheus & Grafana
+* Checkov (Static Code Analysis for IaC)
+* More additional features
 
 ---
 
