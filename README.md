@@ -350,7 +350,7 @@ docker exec -it laravel-app bash
 
 DevOps Portfolio Project and Work Complete For Recruiters to access
 Laravel 12 AWS + Terraform + GithubActions CI/CD By Oluleye Oluseun O
-
+Laravel 12 AWS + Terraform + GithubActions CI/CD By Hasssan G
 ---
 
 # 📜 License
