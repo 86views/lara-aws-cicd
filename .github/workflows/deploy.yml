@@ -44,6 +44,7 @@ jobs:
         id: get-instance
         run: |
           INSTANCE_ID=$(aws ec2 describe-instances \
+            --region us-east-1 \
             --filters \
               "Name=tag:Name,Values=laravel-ec2" \
               "Name=instance-state-name,Values=running" \
@@ -53,24 +54,32 @@ jobs:
             echo "❌ EC2 instance not found!"
             exit 1
           fi
+          echo "✅ Found instance: $INSTANCE_ID"
           echo "instance_id=$INSTANCE_ID" >> $GITHUB_OUTPUT
 
       - name: Trigger deployment via SSM
         run: |
+          INSTANCE_ID="${{ steps.get-instance.outputs.instance_id }}"
+          IMAGE="${{ env.IMAGE }}"
+
+          echo "🎯 Targeting instance: $INSTANCE_ID"
+          echo "📦 Image: $IMAGE"
+
           COMMAND_ID=$(aws ssm send-command \
-            --instance-ids ${{ steps.get-instance.outputs.instance_id }} \
+            --region us-east-1 \
+            --instance-ids "$INSTANCE_ID" \
             --document-name "AWS-RunShellScript" \
-            --parameters commands=["cd /var/www/lara-aws-cicd && ./scripts/deploy.sh ${{ env.IMAGE }}"] \
+            --parameters "commands=[\"bash /var/www/lara-aws-cicd/scripts/deploy.sh '$IMAGE'\"]" \
             --query "Command.CommandId" \
             --output text)
 
           echo "SSM Command ID: $COMMAND_ID"
 
-          # Poll up to 20 minutes (240 x 5s) instead of default 4 min
           for i in $(seq 1 240); do
             STATUS=$(aws ssm get-command-invocation \
+              --region us-east-1 \
               --command-id "$COMMAND_ID" \
-              --instance-id ${{ steps.get-instance.outputs.instance_id }} \
+              --instance-id "$INSTANCE_ID" \
               --query "Status" \
               --output text 2>/dev/null || echo "Pending")
 
@@ -79,16 +88,18 @@ jobs:
             if [ "$STATUS" = "Success" ]; then
               echo "✅ Deployment succeeded"
               aws ssm get-command-invocation \
+                --region us-east-1 \
                 --command-id "$COMMAND_ID" \
-                --instance-id ${{ steps.get-instance.outputs.instance_id }} \
+                --instance-id "$INSTANCE_ID" \
                 --query "StandardOutputContent" \
                 --output text
               exit 0
             elif [ "$STATUS" = "Failed" ] || [ "$STATUS" = "Cancelled" ] || [ "$STATUS" = "TimedOut" ]; then
               echo "❌ Deployment failed — Status: $STATUS"
               aws ssm get-command-invocation \
+                --region us-east-1 \
                 --command-id "$COMMAND_ID" \
-                --instance-id ${{ steps.get-instance.outputs.instance_id }} \
+                --instance-id "$INSTANCE_ID" \
                 --query "StandardErrorContent" \
                 --output text
               exit 1
