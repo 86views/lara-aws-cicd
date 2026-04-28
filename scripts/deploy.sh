@@ -89,6 +89,8 @@ aws ecr get-login-password \
     "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
 
 # ── Deploy ──────────────────────────────────
+sudo docker image prune -af
+sudo docker container prune -f
 sudo docker pull "$APP_IMAGE"
 sudo docker compose -f docker-compose.prod.yml up -d --force-recreate --remove-orphans
 
