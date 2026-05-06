@@ -36,8 +36,8 @@ resource "aws_security_group" "rds" {
     from_port       = 3306
     to_port         = 3306
     protocol        = "tcp"
-    security_groups = [aws_security_group.ec2.id]  # only EC2
-  }
+    security_groups = [aws_security_group.ec2.id]
+  }                                                  # ← this closing brace was missing
 
   egress {
     from_port   = 0

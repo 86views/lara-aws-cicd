@@ -3,8 +3,14 @@ variable "private_subnet_ids" {
   type        = list(string)
 }
 
-variable "ec2_security_group_id" {
-  description = "Security group ID of the EC2 instance (to allow access to RDS on port 3306)"
+# variable "ec2_security_group_id" {
+#   description = "Security group ID of the EC2 instance (to allow access to RDS on port 3306)"
+#   type        = string
+# }
+
+
+variable "rds_security_group_id" {
+  description = "Security group ID for RDS"
   type        = string
 }
 

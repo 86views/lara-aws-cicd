@@ -40,6 +40,37 @@ resource "aws_iam_role_policy_attachment" "ecr_read" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
 }
 
+# Additional policy for EC2 SSM commands
+resource "aws_iam_role_policy" "ec2_ssm" {
+  name = "SSMInstancePolicy"
+  role = aws_iam_role.ec2.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "ssm:DescribeInstanceInformation",
+          "ssm:GetCommandInvocation",
+          "ssm:ListCommandInvocations",
+          "ssm:UpdateInstanceInformation"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+# Attach S3 Full Access (if needed)
+resource "aws_iam_role_policy_attachment" "ec2_s3" {
+  role       = aws_iam_role.ec2.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+}
+
+
+
+
 # Instance Profile
 resource "aws_iam_instance_profile" "ec2" {
   name = "laravel-ec2-profile"
@@ -53,8 +84,6 @@ resource "aws_instance" "laravel" {
   subnet_id              = var.public_subnet_id
   vpc_security_group_ids = [var.security_group_id]
   iam_instance_profile   = aws_iam_instance_profile.ec2.name
-
-  
 
   user_data = templatefile("${path.module}/user_data.sh", {
     github_repository = var.github_repository

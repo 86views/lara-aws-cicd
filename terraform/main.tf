@@ -36,9 +36,10 @@ module "s3" {
 }
 
 module "rds" {
-  source              = "./modules/rds"
-  private_subnet_ids   = module.vpc.private_subnet_ids
-  ec2_security_group_id = module.security_groups.ec2_sg_id
+  source                = "./modules/rds"
+  private_subnet_ids    = module.vpc.private_subnet_ids
+  # ec2_security_group_id = module.security_groups.ec2_sg_id
+  rds_security_group_id = module.security_groups.rds_sg_id  
 }
 
 module "ec2" {
